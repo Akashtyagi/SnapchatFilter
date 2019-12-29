@@ -18,7 +18,8 @@ predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
 glass_img = cv2.imread('filters/glass1.png', -1)
-mustache_img = cv2.imread('filters/m2.png', -1)
+mustache_img = cv2.imread('filters/mustache1.png', -1)
+blunt_img = cv2.imread('filters/blunt.png', -1)
 
 
 def apply_filter(x1,x2,y1,y2,frame,frame_height,frame_width,filterimg,orig_filter_mask,orig_filter_mask_inv):
@@ -48,6 +49,8 @@ def apply_filter(x1,x2,y1,y2,frame,frame_height,frame_width,filterimg,orig_filte
     if glasses_height<0 or glasses_width<0:
         flag = False
     roi1 = frame[y1:y2, x1:x2]
+#    print("y1:y2,x1:x2",y1,y2,x1,x2)
+#    cv2.imshow('x',roi1)
     
     if flag:
         glass = cv2.resize(filterimg, (glasses_width,glasses_height), interpolation = cv2.INTER_AREA)
@@ -60,6 +63,7 @@ def apply_filter(x1,x2,y1,y2,frame,frame_height,frame_width,filterimg,orig_filte
 
 
 camera = cv2.VideoCapture(0)
+#frame = cv2.imread('/home/qainfotech/Downloads/IMG_3284.JPG')
 
 while True:
     grab_trueorfalse, frame = camera.read()       # Read data from the webcam
@@ -114,9 +118,33 @@ while True:
         x1 = int(landmarks.part(51).x - (mustacheWidth/2))
         x2 = int(x1 + mustacheWidth)
 
-        frame = apply_filter(x1,x2,y1,y2,frame,frame_height,frame_width,imgMustache,orig_mustache_mask,orig_mustache_mask_inv)        
+#        frame = apply_filter(x1,x2,y1,y2,frame,frame_height,frame_width,imgMustache,orig_mustache_mask,orig_mustache_mask_inv)        
+        
+# =============================================================================
+#         # Blunt Filter
+# =============================================================================
+        orig_blunt_mask = blunt_img[:,:,3]
+        orig_blunt_mask_inv = cv2.bitwise_not(orig_blunt_mask)
+        imgBlunt = blunt_img[:,:,0:3]
+        
+        origBluntHeight = blunt_img.shape[0]
+        origBluntWidth = blunt_img.shape[1]
+        
+        bluntWidth = abs(int(landmarks.part(66).x - landmarks.part(65).x)*3)
+        bluntHeight = abs(int((landmarks.part(66).x-landmarks.part(11).x)))
+        
+#        y1 = int((landmarks.part(66).y+landmarks.part(64).y)/2)
+        y1 = int(landmarks.part(53).y)
+        y2 = int(y1+bluntHeight)
+        x1 = int(landmarks.part(65).x)
+        x2 = int(x1+bluntWidth)
+        
+        frame = apply_filter(x1,x2,y1,y2,frame,frame_height,frame_width,imgBlunt,orig_blunt_mask,orig_blunt_mask_inv)        
+#        if x2-x1==0:
+#            pass
+            
     cv2.imshow('Webcam',frame)
-#    cv2.imshow("GlassesArea",roi1)
+#    cv2.imshow("GlassesArea",orig_blunt_mask)
     key = cv2.waitKey(1)
     if key == 27:
         break
